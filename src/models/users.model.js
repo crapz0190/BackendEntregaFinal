@@ -52,6 +52,7 @@ const userSchema = new Schema({
     ],
     default: [],
   },
+  last_connection: Date,
   tokenStatus: String,
   resetToken: String,
   resetTokenExpiration: Date,

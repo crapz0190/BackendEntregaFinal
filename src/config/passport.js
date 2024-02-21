@@ -132,6 +132,10 @@ passport.use(
               }
             }
 
+            // actualizar last_connection al hacer login
+            user.last_connection = new Date();
+            await user.save();
+
             const userDTO = {
               _id: user._id,
               first_name: user.first_name,
@@ -172,6 +176,10 @@ passport.use(
               return done(null, false, { message: "Incorrect password" });
             }
           }
+
+          // actualizar last_connection al hacer login
+          user.last_connection = new Date();
+          await user.save();
 
           const userDTO = {
             _id: user._id,

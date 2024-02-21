@@ -170,8 +170,9 @@ class UsersControllers {
     }
   };
 
-  logout = (req, res, next) => {
+  logout = async (req, res, next) => {
     const { status } = req.user;
+
     try {
       if (status === false) {
         CustomError.generateError(
@@ -180,7 +181,19 @@ class UsersControllers {
           403,
         );
       } else {
-        res.cookie("token", "", { expires: new Date(0) });
+        const user = await userRepository.findById({ _id: req.user._id });
+        if (user === undefined) {
+          CustomError.generateError(
+            ErrorsMessages.BAD_GATEWAY,
+            ErrorsNames.SYNTAX_ERROR,
+            502,
+          );
+        }
+
+        user.last_connection = new Date();
+        await user.save();
+
+        res.clearCookie("token");
         return res.status(204).json({ status: "Session ended" });
       }
     } catch (e) {
