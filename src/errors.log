@@ -1,0 +1,5 @@
+{
+  message: 'Error connecting to mongo DB',
+  level: 'fatal',
+  timestamp: '2024-01-28T14:10:26.869Z'
+}
