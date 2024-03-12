@@ -13,6 +13,14 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
+// ruta GET para ver la compra
+router.get(
+  "/:uid/finalize-purchase",
+  passport.authenticate("jwt", { session: false }),
+  authMiddleware(["user"]),
+  userCtrl.purchase,
+);
+
 // sólo actualiza si el usuario ya cargo los documentos
 router.put(
   "/premium/:uid",
@@ -45,6 +53,13 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   authMiddleware(["admin"]),
   userCtrl.currentUser,
+);
+
+router.get(
+  "/:uid",
+  passport.authenticate("jwt", { session: false }),
+  authMiddleware(["user"]),
+  userCtrl.userFoundById,
 );
 
 // Ruta POST para enviar email
@@ -109,6 +124,18 @@ router.post(
   "/activate-account-closure",
   passport.authenticate("jwt", { session: false }),
   userCtrl.accountClousureVerified,
+);
+
+router.delete(
+  "/inactive-user",
+  passport.authenticate("jwt", { session: false }),
+  userCtrl.removeInactiveUser,
+);
+
+router.delete(
+  "/:uid/delete-cart/:cid",
+  passport.authenticate("jwt", { session: false }),
+  userCtrl.removeUser,
 );
 
 // ------------ SIGNUP - LOGIN - PASSPORT GITHUB ------------

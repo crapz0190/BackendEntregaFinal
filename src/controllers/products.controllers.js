@@ -4,6 +4,7 @@ import CustomError from "../errors/errors.generator.js";
 import { ErrorsMessages, ErrorsNames } from "../errors/errors.messages.js";
 import cloudinary from "../utils/cloudinary.js";
 import fs from "fs-extra";
+import { transporter } from "../utils/nodemailer.js";
 
 class ProductsControllers {
   allProducts = async (req, res, next) => {
@@ -553,7 +554,44 @@ class ProductsControllers {
             });
           }
 
+          if (
+            (userRole === "premium" && roleOwner.role === "premium") ||
+            (userRole === "admin" && roleOwner.role === "premium")
+          ) {
+            const foundUserInfo = await userRepository.findById({
+              _id: roleOwner.idUser,
+            });
+
+            const emailBody = `
+            <html>
+                 <head>
+                   <meta charset="utf-8">
+                 </head>
+                 <body>
+                  <p>Hola ${foundUserInfo.first_name},</p><br>
+                  <p>Se le notifica que se ha eliminado un producto de su lista de productos</p>
+                 </body>
+               </html>
+             `;
+            const mailOptions = {
+              from: "crapz0190",
+              to: foundUserInfo.email,
+              subject: "Notificación de eliminación de un producto",
+              html: emailBody,
+            };
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                CustomError.generateError(
+                  ErrorsMessages.INTERNAL_SERVER_ERROR,
+                  ErrorsNames.SEND_EMAIL,
+                  500,
+                );
+              }
+            });
+          }
+
           await productRepository.deleteOne(pid);
+
           return res.status(200).json({
             status: "Removed Product",
             message: "The product has been successfully removed",

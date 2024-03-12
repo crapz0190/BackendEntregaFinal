@@ -70,4 +70,16 @@ export default class BasicDAO {
       );
     }
   }
+  async deleteMany(id) {
+    try {
+      const response = await this.model.deleteMany(id);
+      return response;
+    } catch (error) {
+      CustomError.generateError(
+        ErrorsMessages.INTERNAL_SERVER_ERROR,
+        ErrorsNames.CODE_ERROR,
+        500,
+      );
+    }
+  }
 }

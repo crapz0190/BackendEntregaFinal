@@ -9,5 +9,10 @@ class TicketService {
     const tickets = await this.ticketService.createOne(obj);
     return tickets;
   };
+
+  allPurchases = async (email) => {
+    const purchases = await this.ticketService.findByEmail(email);
+    return purchases;
+  };
 }
 export const ticketService = new TicketService(ticketsDAO);

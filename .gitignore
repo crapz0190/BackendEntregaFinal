@@ -1,5 +1,4 @@
 node_modules
 src/.env.development
 src/.env.production
-test/.env.test
-test/testConfig.js
+test

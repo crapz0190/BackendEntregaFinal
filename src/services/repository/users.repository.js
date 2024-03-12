@@ -39,6 +39,11 @@ class UserRepository {
     const users = await this.userRepository.deleteOne(uid);
     return users;
   };
+
+  deleteMany = async (uid) => {
+    const users = await this.userRepository.deleteMany(uid);
+    return users;
+  };
 }
 
 export const userRepository = new UserRepository(userService);

@@ -5,8 +5,114 @@ import { transporter } from "../utils/nodemailer.js";
 import { env } from "../utils/config.js";
 import { hashData, compareData } from "../utils/config.js";
 import { userRepository } from "../services/repository/users.repository.js";
+import { cartRepository } from "../services/repository/carts.repository.js";
+import { ticketRepository } from "../services/repository/tickets.repository.js";
 
 class UsersControllers {
+  purchase = async (req, res, next) => {
+    const { uid } = req.params;
+
+    try {
+      const { status } = req.user;
+      if (status === false) {
+        CustomError.generateError(
+          ErrorsMessages.FORBIDDEN,
+          ErrorsNames.AUTHENTICATE,
+          403,
+        );
+      } else {
+        const users = await userRepository.findAll();
+        if (users === undefined) {
+          CustomError.generateError(
+            ErrorsMessages.BAD_GATEWAY,
+            ErrorsNames.SYNTAX_ERROR,
+            502,
+          );
+        }
+
+        const idUsers = users.map((item) => item._id);
+        const indexUserId = idUsers.findIndex(
+          (item) => item.toString() === uid,
+        );
+
+        if (indexUserId === -1) {
+          CustomError.generateError(
+            ErrorsMessages.NOT_FOUND,
+            ErrorsNames.USER_NOT_FOUND,
+            404,
+          );
+        }
+
+        const userById = await userRepository.findById(uid);
+        console.log(userById);
+
+        const purchases = await ticketRepository.allPurchases({
+          email: userById.email,
+        });
+        console.log(purchases);
+
+        return res
+          .status(200)
+          .json({ status: "All purchases", payload: allPurchases });
+      }
+    } catch (e) {
+      next(e);
+      console.log(e);
+    }
+  };
+
+  userFoundById = async (req, res, next) => {
+    const { uid } = req.params;
+    const { status } = req.user;
+    try {
+      if (status === false) {
+        CustomError.generateError(
+          ErrorsMessages.FORBIDDEN,
+          ErrorsNames.AUTHENTICATE,
+          403,
+        );
+      } else {
+        const users = await userRepository.findAll();
+        if (users === undefined) {
+          CustomError.generateError(
+            ErrorsMessages.BAD_GATEWAY,
+            ErrorsNames.SYNTAX_ERROR,
+            502,
+          );
+        }
+
+        const idUsers = users.map((item) => item._id);
+        const indexUserId = idUsers.findIndex(
+          (item) => item.toString() === uid,
+        );
+
+        if (indexUserId === -1) {
+          CustomError.generateError(
+            ErrorsMessages.NOT_FOUND,
+            ErrorsNames.USER_NOT_FOUND,
+            404,
+          );
+        }
+
+        const userById = await userRepository.findById(uid);
+
+        const userDTO = {
+          _id: userById._id,
+          first_name: userById.first_name,
+          last_name: userById.last_name,
+          email: userById.email,
+          status: userById.status,
+          cart: userById.cart,
+          role: userById.role,
+        };
+
+        return res.status(200).json({ status: "User found", payload: userDTO });
+      }
+    } catch (e) {
+      next(e);
+    }
+  };
+
   saveUserDocument = async (req, res, next) => {
     const { status } = req.user;
     const { uid } = req.params;
@@ -432,10 +538,114 @@ class UsersControllers {
           email: item.email,
           status: item.status,
           role: item.role,
+          cart: item.cart,
           documents: item.documents,
         }));
 
-        res.json({ status: "All users", payload: objUsers });
+        res.status(200).json({ status: "All users", payload: objUsers });
+      }
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  removeInactiveUser = async (req, res, next) => {
+    try {
+      const users = await userRepository.findAll();
+      const onlyRoleUser = users.filter((user) => user.role !== "admin");
+      const lastTwoDays = 1000 * 60 * 60 * 24 * 2;
+      const today = new Date();
+      const subtract = today.getTime() - lastTwoDays;
+      const date = new Date(subtract);
+
+      const inactiveUsers = onlyRoleUser.filter((user) => {
+        return new Date(user.last_connection) < date;
+      });
+
+      if (inactiveUsers.length === 0) {
+        return res.status(404).json({ message: "No inactive users found" });
+      }
+
+      inactiveUsers.forEach((user) => {
+        const emailBody = `
+        <html>
+             <head>
+               <meta charset="utf-8">
+             </head>
+             <body>
+               <p>Su cuenta ha sido eliminado por inactividad</p>
+             </body>
+           </html>
+         `;
+        const mailOptions = {
+          from: "crapz0190",
+          to: user.email,
+          subject: "Mensaje de eliminación de cuenta",
+          html: emailBody,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            CustomError.generateError(
+              ErrorsMessages.INTERNAL_SERVER_ERROR,
+              ErrorsNames.SEND_EMAIL,
+              500,
+            );
+          }
+        });
+      });
+
+      // Eliminar los usuarios inactivos de la base de datos
+      const deletedUsers = await userRepository.deleteMany({
+        _id: { $in: inactiveUsers.map((user) => user._id) },
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Inactive users removed", deletedUsers });
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  removeUser = async (req, res, next) => {
+    const { uid, cid } = req.params;
+    try {
+      const { status } = req.user;
+      if (status === false) {
+        CustomError.generateError(
+          ErrorsMessages.FORBIDDEN,
+          ErrorsNames.AUTHENTICATE,
+          403,
+        );
+      } else {
+        const user = await userRepository.findById(uid);
+        const cart = await cartRepository.findById(cid);
+
+        if (user === undefined && cart === undefined) {
+          CustomError.generateError(
+            ErrorsMessages.BAD_GATEWAY,
+            ErrorsNames.SYNTAX_ERROR,
+            502,
+          );
+        } else {
+          if (user && cart) {
+            await userRepository.deleteOne({
+              _id: user._id,
+            });
+            await cartRepository.deleteOne({
+              _id: cart._id,
+            });
+
+            res.status(200).json({ status: "Deleted user and cart" });
+          } else {
+            CustomError.generateError(
+              ErrorsMessages.NOT_FOUND,
+              ErrorsNames.USER_NOT_FOUND,
+              404,
+            );
+          }
+        }
       }
     } catch (e) {
       next(e);

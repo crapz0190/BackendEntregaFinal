@@ -39,5 +39,10 @@ class UserService {
     const users = await this.userService.deleteOne(uid);
     return users;
   };
+
+  deleteMany = async (uid) => {
+    const users = await this.userService.deleteMany(uid);
+    return users;
+  };
 }
 export const userService = new UserService(usersDAO);
