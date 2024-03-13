@@ -5,13 +5,18 @@ class TicketRepository {
     this.ticketRepository = data;
   }
 
+  allTicket = () => {
+    const tickets = this.ticketRepository.allTicket();
+    return tickets;
+  };
+
   createTicket = (obj) => {
     const tickets = this.ticketRepository.createTicket(obj);
     return tickets;
   };
 
-  allPurchases = (email) => {
-    const purchases = this.ticketRepository.allPurchases(email);
+  allPurchases = (uid) => {
+    const purchases = this.ticketRepository.allPurchases(uid);
     return purchases;
   };
 }

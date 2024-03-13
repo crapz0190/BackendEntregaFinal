@@ -5,13 +5,18 @@ class TicketService {
     this.ticketService = data;
   }
 
+  allTicket = async () => {
+    const tickets = await this.ticketService.getAll();
+    return tickets;
+  };
+
   createTicket = async (obj) => {
     const tickets = await this.ticketService.createOne(obj);
     return tickets;
   };
 
-  allPurchases = async (email) => {
-    const purchases = await this.ticketService.findByEmail(email);
+  allPurchases = async (uid) => {
+    const purchases = await this.ticketService.findByIdTicket(uid);
     return purchases;
   };
 }

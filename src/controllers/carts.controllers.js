@@ -174,7 +174,6 @@ class CartsControllers {
               const userFound = await userRepository.findById({
                 _id: cart.user,
               });
-              console.log("USER FOUND", userFound.email);
 
               if (!userFound) {
                 // Manejar el caso en el que el usuario no se encuentra
@@ -186,6 +185,7 @@ class CartsControllers {
                 code: nanoid(10),
                 amount: calculateTotalAmount(productsToPurchase),
                 purchaser: userFound.email,
+                idUser: userFound._id,
               };
 
               const ticket = await ticketRepository.createTicket(ticketData);

@@ -21,6 +21,10 @@ const ticketSchema = new Schema({
     type: String,
     // required: true,
   },
+  idUser: {
+    type: Schema.Types.ObjectId,
+    ref: "Users",
+  },
 });
 
 export const ticketsModel = model(ticketCollection, ticketSchema);

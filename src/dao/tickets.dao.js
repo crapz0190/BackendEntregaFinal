@@ -8,9 +8,9 @@ class TicketDAO extends BasicDAO {
     super(ticketsModel);
   }
 
-  async findByEmail(email) {
+  async findByIdTicket(uid) {
     try {
-      const response = await usersModel.findOne({ email });
+      const response = await ticketsModel.find(uid);
       return response;
     } catch (error) {
       CustomError.generateError(

@@ -43,17 +43,27 @@ class UsersControllers {
           );
         }
 
-        const userById = await userRepository.findById(uid);
-        console.log(userById);
+        const purchases = await ticketRepository.allTicket();
 
-        const purchases = await ticketRepository.allPurchases({
-          email: userById.email,
+        const getTicketPurchase = purchases.map((item) => item.idUser);
+
+        const indexUserTicket = getTicketPurchase.findIndex(
+          (item) => item.toString() === uid,
+        );
+
+        if (indexUserTicket === -1) {
+          CustomError.generateError(
+            ErrorsMessages.NOT_FOUND,
+            ErrorsNames.USER_NOT_FOUND,
+            404,
+          );
+        }
+
+        const tickets = await ticketRepository.allPurchases({
+          idUser: uid,
         });
-        console.log(purchases);
 
-        return res
-          .status(200)
-          .json({ status: "All purchases", payload: allPurchases });
+        return res.status(200).json({ status: "Tickets", payload: tickets });
       }
     } catch (e) {
       next(e);
